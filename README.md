@@ -10,9 +10,8 @@ _"Pepita": "nugget" in Spanish._
    * [Installation and configuration](#installation-and-configuration)
 
    * [Manual](#manual)
-     * [Cache](#cache)
-     * [Custom bindings](#custom-bindings)
-     * [Releases](#releases)
+     * [Interactive functions](#interactive-functions)
+     * [Results buffer](#results-buffer)
    * [Roadmap](#roadmap)
 <!--te-->
 
@@ -62,7 +61,3 @@ From that buffer you can use:
 * Create a derived mode for the results buffer
 * Provide a way to see searches started but not completed
 * Get session auth working
- o
-
-
-
