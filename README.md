@@ -1,5 +1,6 @@
 # pepita
 Run a Splunk search from Emacs.
+
 _"Pepita": "nugget" in Spanish._
 
 
@@ -61,3 +62,4 @@ From that buffer you can use:
 * Create a derived mode for the results buffer
 * Provide a way to see searches started but not completed
 * Get session auth working
+* Handle gracefully not having results. (Maybe change the flow to open the results buffer as soon as search starts)

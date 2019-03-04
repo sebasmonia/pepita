@@ -6,7 +6,7 @@
 ;; URL: https://github.com/sebasmonia/pepita.git
 ;; Package-Requires: ((emacs "25") (csv "2.1"))
 ;; Version: 1.0
-;; Keywords: splunk
+;; Keywords: tools convenience matching
 
 ;; This file is not part of GNU Emacs.
 
