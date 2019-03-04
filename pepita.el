@@ -16,7 +16,7 @@
 
 ;; Runs a Splunk search from Emacs.  Returns the results as CSV, with option to export
 ;; to JSON and HTML.
-;; The entry points are pepita-new-search and pepita-search-at-point.
+;; The entry points are pepita-new-search and pepita-search-at-point
 ;; You will be prompted a query text, and time range for the query, and will get back
 ;; the results (when ready) in a new buffer.  In the results you can use:
 ;; j - to export to JSON
@@ -152,7 +152,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 (defun pepita--store-request-parameters (query from to)
   "Store QUERY FROM TO for a search and return their index."
-  (condition-case err
+  (condition-case nil
       (progn
         (let ((index 0))
           (while (aref pepita--pending-requests index)
@@ -191,8 +191,8 @@ Toggle column: <span id=\"cols\"> </span>
                      querystring))
     (message "Splunk: running search"))
 
-(defun pepita--search-cb (status pri)
-  "Call back to process the data of PRI  from a Splunk search, STATUS is ignored."
+(defun pepita--search-cb (_status pri)
+  "Call back to process the data of PRI  from a Splunk search, _STATUS is ignored."
   (pepita--message (format "Splunk: received %s lines of output" (count-lines (point-min) (point-max))))
   (delete-region (point-min) (+ 1 url-http-end-of-headers))
   (let ((pepita-buffer (generate-new-buffer-name "Splunk result" )))
@@ -232,24 +232,6 @@ Toggle column: <span id=\"cols\"> </span>
            (if (equal pepita--buffer-to "")
                "-"
              pepita--buffer-to)))
-
-(defun pepita-search-at-point (arg)
-  "Search the line at point, or region.  With ARG append to last search."
-  (interactive "P")
-  (let ((query (if (use-region-p)
-                   (buffer-substring-no-properties (region-beginning) (region-end))
-                 (substring (thing-at-point 'line t) 0 -1)))
-        (from "")
-        (to "")
-        (last-params-used pepita--last-search-parameters))
-    (when arg
-      (setq query (concat (first last-params-used) " " query))
-      (setq from (second last-params-used))
-      (setq to (third last-params-used)))
-    (setq query (read-string "Query term: " query))
-    (setq from (read-string "Events from: " from))
-    (setq to (read-string "Events to: " to))
-    (pepita-search query from to)))
 
 ;;------------------Search - interactive commands---------------------------------
 
@@ -351,8 +333,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 (defun pepita--make-html-header (data)
   "Create the table header using DATA."
-  (let ((row-template "<THEAD><TR>%s</TR></THEAD>")
-        (cell-template "<TH col-index=\"%s\">%s</TH>")
+  (let ((cell-template "<TH col-index=\"%s\">%s</TH>")
         (col-index -1)
         (first-row (car data)))
     (mapconcat (lambda (cell)
@@ -364,8 +345,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 (defun pepita--make-html-footer (data)
   "Create the table footer using DATA."
-  (let ((row-template "<TFOOT><TR>%s</TR></TFOOT>")
-        (cell-template "<TH>%s</TH>")
+  (let ((cell-template "<TH>%s</TH>")
         (first-row (car data)))
     (mapconcat (lambda (cell) (format cell-template (car cell))) first-row "")))
 
