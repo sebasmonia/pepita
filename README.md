@@ -1,6 +1,9 @@
 # pepita
 Run a Splunk search from Emacs.
 
+Splunk is a tool that ingests plain data (for example, logs) and makes it searchable. It exposes a REST API, which made this package possible.
+See https://www.splunk.com for more information.
+
 _"Pepita": "nugget" in Spanish._
 
 
