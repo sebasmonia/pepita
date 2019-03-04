@@ -49,12 +49,28 @@ I keep an org file with some common queries, in those scenarios the second funct
 It's also useful to refine a search from results (highlight the text you want to add to the query and
 call with prefix arg).
 
+## Search parameters
+
+_Query text_: this is exacly what you would type in the search box in Splunk
+
+_From_: A time specification, or blank.
+
+_To_: A time specification, or blank.
+
+
+Splunk is really flexible with the format for the last two. For the full details see https://docs.splunk.com/Documentation/Splunk/7.2.4/SearchReference/SearchTimeModifiers, but the following examples can get you started: 
+
+* -5d => five days ago
+* -30m => last thirty minutes
+* 2019-01-01T14:00:00 => Jan 1st 2019 at 2 PM
+* From: -3h To: -10m => events from 3 hours ago up to 10 minutes ago
+
 ## Results buffer
 
 The search runs in the background, and the results are displayed in a new buffer, in CSV format.
 From that buffer you can use:
-* J - to export to JSON
-* H - to export to HTML
+* j - to export to JSON
+* h - to export to HTML
 * ? - to see the parameters used in the query
 
 ## Roadmap
