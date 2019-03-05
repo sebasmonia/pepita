@@ -79,6 +79,6 @@ From that buffer you can use:
 ## Roadmap
 
 * Create a derived mode for the results buffer
-* Provide a way to see searches started but not completed
+* ~Provide a way to see searches started but not completed~
 * Get session auth working
-* Handle gracefully not having results. (Maybe change the flow to open the results buffer as soon as search starts)
+* ~Handle gracefully not having results. (Maybe change the flow to open the results buffer as soon as search starts)~
