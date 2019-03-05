@@ -41,6 +41,10 @@
   "Username, if empty it will be prompted."
   :type 'string)
 
+(defcustom pepita-message-on-search-complete t
+  "Show a message when search results are available."
+  :type 'boolean)
+
 (defcustom pepita--html-template "<HTML><HEAD>
   <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css\"/>
   <script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-3.3.1.js\"></script>
@@ -95,7 +99,7 @@ Toggle column: <span id=\"cols\"> </span>
 (defun pepita--message (text)
   "Show a TEXT as a message and log it."
   (message text)
-  (panda--log "Message:" text "\n"))
+  (pepita--log "Message:" text "\n"))
 
 (defun pepita--log (&rest to-log)
   "Append TO-LOG to the log buffer.  Intended for internal use only."
@@ -148,17 +152,28 @@ Toggle column: <span id=\"cols\"> </span>
                                                (format "%s:%s" username password))))))
     pepita--auth-header))
 
+(defun pepita-clear-cached-credentials ()
+  "Clear current credentials, next request will prompt them again."
+  (interactive)
+  (setq pepita--auth-header nil)
+  (pepita--message "Done. Next request will prompt for credentials."))
+
+
 ;;------------------Pending request management------------------------------------
 
-(defun pepita--store-request-parameters (query from to)
-  "Store QUERY FROM TO for a search and return their index."
+(defun pepita--store-request-parameters (query from to out-buffer)
+  "Store QUERY FROM TO OUT-BUFFER for a search and return their index."
   (condition-case nil
       (progn
-        (let ((index 0))
+        (let ((index 0)
+              (params `((query . ,query)
+                        (from . ,from)
+                        (to . ,to)
+                        (out-buffer . ,out-buffer))))
           (while (aref pepita--pending-requests index)
             (setq index (+ 1 index)))
-          (aset pepita--pending-requests index (list query from to))
-          (setq pepita--last-search-parameters (list query from to))
+          (aset pepita--pending-requests index params)
+          (setq pepita--last-search-parameters params)
           index)) ;;return index
     (args-out-of-range (error "Too many pending requests"))))
 
@@ -177,48 +192,65 @@ Toggle column: <span id=\"cols\"> </span>
                         (max_time . "0")
                         (max_count . "10000")
                         (search . ,(concat "search " query-text))))
+        (out-buffer (generate-new-buffer-name "Splunk result" ))
         (pending-request-index nil))
     (unless (eq (length from) 0)
       (push (cons 'earliest_time from) querystring))
     (unless (eq (length to) 0)
       (push (cons 'latest_time to) querystring))
-    (setq pending-request-index (pepita--store-request-parameters query-text from to))
+    (setq pending-request-index (pepita--store-request-parameters query-text from to out-buffer))
+    (with-current-buffer (get-buffer-create out-buffer)
+      (insert (format "Search started %s\nQuery: %s\nFrom: %s\nTo: %s\n"
+                      (format-time-string "%Y-%m-%d %T")
+                      query-text
+                      from
+                      to)))
     (pepita--request pending-request-index
                      'pepita--search-cb
                      method
                      "GET"
                      nil
-                     querystring))
-    (message "Splunk: running search"))
+                     querystring)
+    (switch-to-buffer-other-window out-buffer)))
 
 (defun pepita--search-cb (_status pri)
   "Call back to process the data of PRI  from a Splunk search, _STATUS is ignored."
-  (pepita--message (format "Splunk: received %s lines of output" (count-lines (point-min) (point-max))))
+  ;; here we start in the http output buffer, briefly move to results to clear it, then copy the raw output
+  ;; and finally go back to work on output
+  (pepita--log (format "Results for %s: received %s lines of output" pri (count-lines (point-min) (point-max))))
   (delete-region (point-min) (+ 1 url-http-end-of-headers))
-  (let ((pepita-buffer (generate-new-buffer-name "Splunk result" )))
-    (get-buffer-create pepita-buffer)
-    (copy-to-buffer pepita-buffer (point-min) (point-max))
-    (with-current-buffer pepita-buffer
-      ;; unquote all field names, makes things easier later
-      ;; replace first line, then re-insert it, delete old line
-      (goto-char (point-min))
-      (insert (replace-regexp-in-string "\"" "" (thing-at-point 'line)))
-      (delete-region (point) (search-forward "\n" nil t))
-      (goto-char (point-min))
-      (read-only-mode)
-      (make-local-variable 'pepita--buffer-query)
-      (make-local-variable 'pepita--buffer-from)
-      (make-local-variable 'pepita--buffer-to)
-      (destructuring-bind (query from to) (pepita--complete-request pri)
-        (setq pepita--buffer-query query)
-        (setq pepita--buffer-from from)
-        (setq pepita--buffer-to to)
-        (setq pepita--last-search-text query)) ;; TODO: fix this
-      (local-set-key "?" 'pepita--search-parameters)
-      (local-set-key "j" 'pepita--export-json)
-      (local-set-key "h" 'pepita--export-html)
-      (switch-to-buffer-other-window pepita-buffer)))
-  (kill-buffer))
+  (let-alist (pepita--complete-request pri)
+    (if (= (buffer-size) 0)
+        (progn
+          (with-current-buffer (get-buffer-create .out-buffer)
+            (goto-char (point-max))
+            (insert (format "\nSearch completed %s -- No matches found"
+                            (format-time-string "%Y-%m-%d %T")))))
+      (progn
+        ;; erase results buffer
+        (with-current-buffer (get-buffer-create .out-buffer)
+          (erase-buffer)) ;; remove old text
+        (copy-to-buffer .out-buffer (point-min) (point-max))
+        (with-current-buffer .out-buffer
+          ;; unquote all field names, makes things easier later
+          ;; replace first line, then re-insert it, delete old line
+          (goto-char (point-min))
+          (insert (replace-regexp-in-string "\"" "" (thing-at-point 'line)))
+          (delete-region (point) (search-forward "\n" nil t))
+          (goto-char (point-min))
+          (read-only-mode)
+          (make-local-variable 'pepita--buffer-query)
+          (make-local-variable 'pepita--buffer-from)
+          (make-local-variable 'pepita--buffer-to)
+          (setq pepita--buffer-query .query)
+          (setq pepita--buffer-from .from)
+          (setq pepita--buffer-to .to)
+          (local-set-key "?" 'pepita--search-parameters)
+          (local-set-key "j" 'pepita--export-json)
+          (local-set-key "h" 'pepita--export-html)
+          (when pepita-message-on-search-complete
+            (pepita--message (concat "Pepita: Results available in buffer " .out-buffer))))))
+    (kill-buffer))) ;; this kills the original url.el output buffer
 
 (defun pepita--search-parameters ()
   "Show a message with the parameters used to run the search in this buffer."
@@ -245,9 +277,10 @@ Toggle column: <span id=\"cols\"> </span>
         (to "")
         (last-params-used pepita--last-search-parameters))
     (when arg
-      (setq query (concat (first last-params-used) " " query))
-      (setq from (second last-params-used))
-      (setq to (third last-params-used)))
+      (let-alist last-params-used
+        (setq query (concat .query " " query))
+        (setq from .from)
+        (setq to .to)))
     (setq query (read-string "Query term: " query))
     (setq from (read-string "Events from: " from))
     (setq to (read-string "Events to: " to))
@@ -261,9 +294,10 @@ Toggle column: <span id=\"cols\"> </span>
         (to "")
         (last-params-used pepita--last-search-parameters))
     (when arg
-      (setq query (concat (first last-params-used) " " query))
-      (setq from (second last-params-used))
-      (setq to (third last-params-used)))
+      (let-alist last-params-used
+        (setq query (concat .query " " query))
+        (setq from .from)
+        (setq to .to)))
     (setq query (read-string "Query term: " query))
     (setq from (read-string "Events from: " from))
     (setq to (read-string "Events to: " to))
