@@ -20,8 +20,9 @@
 ;; You will be prompted a query text, and time range for the query, and will get back
 ;; the results (when ready) in a new buffer.  In the results you can use:
 ;; j - to export to JSON
-;; h- to export to HTML
+;; h - to export to HTML
 ;; ? - to see the parameters used in the query
+;; g - to refresh the results buffer
 
 ;;; Code:
 
@@ -47,6 +48,9 @@
 
 (defcustom pepita--html-template "<HTML><HEAD>
   <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css\"/>
+  <STYLE TYPE=\"text/css\">
+      body { font-family: monospace; font-size: small; }
+  </STYLE>
   <script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-3.3.1.js\"></script>
   <script type=\"text/javascript\" src=\"https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js\"></script>
   <script
@@ -185,14 +189,14 @@ Toggle column: <span id=\"cols\"> </span>
 
 ;;------------------Search functions and internal commands------------------------
 
-(defun pepita-search (query-text &optional from to)
-  "Run a Splunk search with QUERY-TEXT, between FROM and TO."
+(defun pepita-search (query-text &optional from to out-buffer-name)
+  "Run a Splunk search with QUERY-TEXT, between FROM and TO, if provided use OUT-BUFFER-NAME."
   (let ((method "search/jobs/export")
         (querystring  `((output_mode . "csv")
                         (max_time . "0")
                         (max_count . "10000")
                         (search . ,(concat "search " query-text))))
-        (out-buffer (generate-new-buffer-name "Splunk result" ))
+        (out-buffer (or out-buffer-name (generate-new-buffer-name "Splunk result" )))
         (pending-request-index nil))
     (unless (eq (length from) 0)
       (push (cons 'earliest_time from) querystring))
@@ -200,6 +204,8 @@ Toggle column: <span id=\"cols\"> </span>
       (push (cons 'latest_time to) querystring))
     (setq pending-request-index (pepita--store-request-parameters query-text from to out-buffer))
     (with-current-buffer (get-buffer-create out-buffer)
+      (setq buffer-read-only nil)
+      (erase-buffer)
       (insert (format "Search started %s\nQuery: %s\nFrom: %s\nTo: %s\n"
                       (format-time-string "%Y-%m-%d %T")
                       query-text
@@ -211,7 +217,8 @@ Toggle column: <span id=\"cols\"> </span>
                      "GET"
                      nil
                      querystring)
-    (switch-to-buffer-other-window out-buffer)))
+    (unless out-buffer-name
+      (switch-to-buffer-other-window out-buffer))))
 
 (defun pepita--search-cb (_status pri)
   "Call back to process the data of PRI  from a Splunk search, _STATUS is ignored."
@@ -220,15 +227,23 @@ Toggle column: <span id=\"cols\"> </span>
   (pepita--log (format "Results for %s: received %s lines of output" pri (count-lines (point-min) (point-max))))
   (delete-region (point-min) (+ 1 url-http-end-of-headers))
   (let-alist (pepita--complete-request pri)
+    (with-current-buffer (get-buffer-create .out-buffer)
+      (pepita-results-mode)
+      (setq buffer-read-only nil)
+      (setq pepita--buffer-query .query)
+      (setq pepita--buffer-from .from)
+      (setq pepita--buffer-to .to))
     (if (= (buffer-size) 0)
         (progn
           (with-current-buffer (get-buffer-create .out-buffer)
             (goto-char (point-max))
             (insert (format "\nSearch completed %s -- No matches found"
-                            (format-time-string "%Y-%m-%d %T")))))
+                            (format-time-string "%Y-%m-%d %T")))
+            (setq buffer-read-only t)))
       (progn
         ;; erase results buffer
         (with-current-buffer (get-buffer-create .out-buffer)
+          (setq buffer-read-only nil)
           (erase-buffer)) ;; remove old text
         (copy-to-buffer .out-buffer (point-min) (point-max))
         (with-current-buffer .out-buffer
@@ -238,24 +253,23 @@ Toggle column: <span id=\"cols\"> </span>
           (insert (replace-regexp-in-string "\"" "" (thing-at-point 'line)))
           (delete-region (point) (search-forward "\n" nil t))
           (goto-char (point-min))
-          (read-only-mode)
-          (make-local-variable 'pepita--buffer-query)
-          (make-local-variable 'pepita--buffer-from)
-          (make-local-variable 'pepita--buffer-to)
-          (setq pepita--buffer-query .query)
-          (setq pepita--buffer-from .from)
-          (setq pepita--buffer-to .to)
-          (local-set-key "?" 'pepita--search-parameters)
-          (local-set-key "j" 'pepita--export-json)
-          (local-set-key "h" 'pepita--export-html)
+          (setq buffer-read-only t)
           (when pepita-message-on-search-complete
             (pepita--message (concat "Pepita: Results available in buffer " .out-buffer))))))
     (kill-buffer))) ;; this kills the original url.el output buffer
 
+(defun pepita--rerun-query (arg)
+  "Re-run the current query.  If ARG, run it in a new buffer."
+  (interactive "P")
+  (let ((out-buf-name (if arg nil (buffer-name))))
+    (pepita-search pepita--buffer-query
+                   pepita--buffer-from
+                   pepita--buffer-to
+                   out-buf-name)))
+
 (defun pepita--search-parameters ()
   "Show a message with the parameters used to run the search in this buffer."
   (interactive)
-  ;; TODO: show to, from, make nicer
   (message "Query: \"%s\". \nEvents from %s to %s"
            pepita--buffer-query
            (if (equal pepita--buffer-from "")
@@ -390,6 +404,21 @@ Toggle column: <span id=\"cols\"> </span>
 (defun pepita--make-html-cells (row)
   "Create individual cells for ROW."
   (mapconcat (lambda (cell) (format "<TD>%s</TD>" (cdr cell))) row ""))
+
+(defvar pepita-results-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "?" 'pepita--search-parameters)
+    (define-key map "h" 'pepita--export-html)
+    (define-key map "j" 'pepita--export-json)
+    (define-key map "g" 'pepita--rerun-query)
+    map) "Keymap for pepita-results-mode.")
+
+(define-derived-mode pepita-results-mode
+  fundamental-mode "Splunk results"
+  "Major mode for Splunk results buffers."
+  (make-local-variable 'pepita--buffer-query)
+  (make-local-variable 'pepita--buffer-from)
+  (make-local-variable 'pepita--buffer-to))
 
 (provide 'pepita)
 ;;; pepita.el ends here

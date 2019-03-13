@@ -65,7 +65,7 @@ Splunk is really flexible with the format for the last two. For the full details
 
 * -5d => five days ago
 * -30m => last thirty minutes
-* 2019-01-01T14:00:00 => Jan 1st 2019 at 2 PM
+* 2019-01-01T14:00:00 => Jan 1st 2019 at 2 PM _ISO 8601 format_
 * From: -3h To: -10m => events from 3 hours ago up to 10 minutes ago
 
 ## Results buffer
@@ -75,10 +75,6 @@ From that buffer you can use:
 * j - to export to JSON
 * h - to export to HTML
 * ? - to see the parameters used in the query
+* g - to re-run the query in the same results buffer. Use prefix arg to re-run the query in a new buffer.
 
-## Roadmap
 
-* Create a derived mode for the results buffer
-* ~Provide a way to see searches started but not completed~
-* Get session auth working
-* ~Handle gracefully not having results. (Maybe change the flow to open the results buffer as soon as search starts)~
