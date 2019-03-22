@@ -1,4 +1,4 @@
-;;; pepita.el --- Run Splunk search commands from Emacs  -*- lexical-binding: t; -*-
+;;; pepita.el --- Run Splunk search commands, export results to CSV/HTML/JSON  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Sebastian Monia
 ;;
@@ -95,9 +95,7 @@ Toggle column: <span id=\"cols\"> </span>
 (defvar pepita--last-search-parameters nil)
 
 ;; buffer local variables in results
-(defvar pepita--buffer-query "" "Text used to query.")
-(defvar pepita--buffer-from "" "From used query.")
-(defvar pepita--buffer-to "" "To used to query.")
+(defvar-local pepita--search-parameters nil "Parameters used in the current Results buffer.")
 ;;------------------Package infrastructure----------------------------------------
 
 (defun pepita--message (text)
@@ -129,11 +127,11 @@ Toggle column: <span id=\"cols\"> </span>
         (url-request-method (or verb "GET"))
         (url-request-data (encode-coding-string data 'utf-8)))
     (when query-params
-      (setq url (concat url (pepita--parse-querystring query-params))))
+      (setq url (concat url (pepita--build-querystring query-params))))
     (pepita--log (format "API call #%s - URL %s\n" pri url))
     (url-retrieve url callback (list pri))))
 
-(defun pepita--parse-querystring (params)
+(defun pepita--build-querystring (params)
   "Convert PARAMS alist to an encoded query string."
   (concat "?"
           (mapconcat (lambda (pair)
@@ -145,16 +143,14 @@ Toggle column: <span id=\"cols\"> </span>
 
 (defun pepita--get-auth-header ()
   "Return the auth header.  Caches credentials per-session."
-  (let ((username nil)
-        (password nil))
-    (unless pepita--auth-header
-      (setq username (or pepita-splunk-username (read-string "Splunk username: ")))
-      (setq password (read-passwd "Splunk password: "))
+  (unless pepita--auth-header
+    (let ((username (or pepita-splunk-username (read-string "Splunk username: ")))
+          (password (read-passwd "Splunk password: ")))
       (setq pepita--auth-header (cons "Authorization"
                                       (concat "Basic "
                                               (base64-encode-string
-                                               (format "%s:%s" username password))))))
-    pepita--auth-header))
+                                               (format "%s:%s" username password)))))))
+  pepita--auth-header)
 
 (defun pepita-clear-cached-credentials ()
   "Clear current credentials, next request will prompt them again."
@@ -230,9 +226,7 @@ Toggle column: <span id=\"cols\"> </span>
     (with-current-buffer (get-buffer-create .out-buffer)
       (pepita-results-mode)
       (setq buffer-read-only nil)
-      (setq pepita--buffer-query .query)
-      (setq pepita--buffer-from .from)
-      (setq pepita--buffer-to .to))
+      (setq pepita--search-parameters (list .query .from .to)))
     (if (= (buffer-size) 0)
         (progn
           (with-current-buffer (get-buffer-create .out-buffer)
@@ -255,67 +249,53 @@ Toggle column: <span id=\"cols\"> </span>
           (goto-char (point-min))
           (setq buffer-read-only t)
           (when pepita-message-on-search-complete
-            (pepita--message (concat "Pepita: Results available in buffer " .out-buffer))))))
-    (kill-buffer))) ;; this kills the original url.el output buffer
+            (pepita--message (concat "Pepita: Results available in buffer " .out-buffer)))))))
+    (kill-buffer)) ;; this kills the original url.el output buffer
 
 (defun pepita--rerun-query (arg)
   "Re-run the current query.  If ARG, run it in a new buffer."
   (interactive "P")
   (let ((out-buf-name (if arg nil (buffer-name))))
-    (pepita-search pepita--buffer-query
-                   pepita--buffer-from
-                   pepita--buffer-to
-                   out-buf-name)))
+    (destructuring-bind (query from to) pepita--search-parameters
+      (pepita-search query
+                     from
+                     to
+                     out-buf-name))))
 
 (defun pepita--search-parameters ()
   "Show a message with the parameters used to run the search in this buffer."
   (interactive)
-  (message "Query: \"%s\". \nEvents from %s to %s"
-           pepita--buffer-query
-           (if (equal pepita--buffer-from "")
-               "-"
-             pepita--buffer-from)
-           (if (equal pepita--buffer-to "")
-               "-"
-             pepita--buffer-to)))
+  (destructuring-bind (query from to) pepita--search-parameters
+    (message "Query: \"%s\". \nEvents from %s to %s"
+             query
+             (if (equal from "")
+                 "-"
+               from)
+             (if (equal to "")
+                 "-"
+               to))))
 
 ;;------------------Search - interactive commands---------------------------------
 
 (defun pepita-search-at-point (arg)
   "Search using the region or line at point as query.  With ARG use last search parameters as starting point."
   (interactive "P")
-  (let ((query (if (use-region-p)
-                   (buffer-substring-no-properties (region-beginning) (region-end))
-                 (substring (thing-at-point 'line t) 0 -1)))
-        (from "")
-        (to "")
-        (last-params-used pepita--last-search-parameters))
-    (when arg
-      (let-alist last-params-used
-        (setq query (concat .query " " query))
-        (setq from .from)
-        (setq to .to)))
-    (setq query (read-string "Query term: " query))
-    (setq from (read-string "Events from: " from))
-    (setq to (read-string "Events to: " to))
-    (pepita-search query from to)))
+  (pepita--read-and-search (if (use-region-p)
+                               (buffer-substring-no-properties (region-beginning) (region-end))
+                             (substring (thing-at-point 'line t) 0 -1))
+                           arg))
 
 (defun pepita-new-search (arg)
   "Run a search.  With ARG use last search parameters as starting point."
   (interactive "P")
-  (let ((query "")
-        (from "")
-        (to "")
-        (last-params-used pepita--last-search-parameters))
-    (when arg
-      (let-alist last-params-used
-        (setq query (concat .query " " query))
-        (setq from .from)
-        (setq to .to)))
-    (setq query (read-string "Query term: " query))
-    (setq from (read-string "Events from: " from))
-    (setq to (read-string "Events to: " to))
-    (pepita-search query from to)))
+  (pepita--read-and-search "" arg))
+
+(defun pepita--read-and-search (initial-input use-last)
+  "Read the params for a search using INITIAL-INPUT, feed from last query if USE-LAST."
+  (let-alist pepita--last-search-parameters
+    (pepita-search (read-string "Query term: " (concat (when use-last .query) " " initial-input))
+                   (read-string "Events from: " (when use-last .from))
+                   (read-string "Events to: " (when use-last .to)))))
 
 ;;------------------Export functions----------------------------------------------
 
@@ -415,10 +395,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 (define-derived-mode pepita-results-mode
   fundamental-mode "Splunk results"
-  "Major mode for Splunk results buffers."
-  (make-local-variable 'pepita--buffer-query)
-  (make-local-variable 'pepita--buffer-from)
-  (make-local-variable 'pepita--buffer-to))
+  "Major mode for Splunk results buffers.")
 
 (provide 'pepita)
 ;;; pepita.el ends here
