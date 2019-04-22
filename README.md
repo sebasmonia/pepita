@@ -1,11 +1,12 @@
+[![MELPA](https://melpa.org/packages/pepita-badge.svg)](https://melpa.org/#/pepita)
+
 # pepita
+_"Pepita": "nugget" in Spanish._
+
 Run a Splunk search from Emacs.
 
 Splunk is a tool that ingests plain data (for example, logs) and makes it searchable. It exposes a REST API, which made this package possible.
 See https://www.splunk.com for more information.
-
-_"Pepita": "nugget" in Spanish._
-
 
 ## Table of contents
 
@@ -21,9 +22,9 @@ _"Pepita": "nugget" in Spanish._
 
 ## Installation and configuration
 
-Place pepita.el in your load-path.  Or install from MELPA (coming soon).
+Place pepita.el in your load-path. Or (preferred) install from MELPA.
 
-The next step would be to use customize for pepita. Not a lot to see so far:
+The next step would be tocall `customize-group` for pepita. Not a lot to see so far:
 
 1. **REQUIRED**: Add the Splunk URL _(Notice the trailing /)_:
 
@@ -37,7 +38,7 @@ The next step would be to use customize for pepita. Not a lot to see so far:
 
 The first request to Splunk you will be prompted user/pass and then your credentials will be
 cached in memory as long as Emacs is open. I couldn't get session auth to work 
-yet (so we don't need to keep credentials around) but it's a feature in the roadmap.
+yet (so we don't need to keep credentials around anymore) but it's a feature in the roadmap.
 
 ## Interactive functions
 
@@ -76,5 +77,4 @@ From that buffer you can use:
 * h - to export to HTML
 * ? - to see the parameters used in the query
 * g - to re-run the query in the same results buffer. Use prefix arg to re-run the query in a new buffer.
-
 
