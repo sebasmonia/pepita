@@ -78,3 +78,7 @@ From that buffer you can use:
 * ? - to see the parameters used in the query
 * g - to re-run the query in the same results buffer. Use prefix arg to re-run the query in a new buffer.
 
+## Queries in progress
+
+The command `pepita-queries-running` will open a buffer with the list of queries waiting for results. Press `g` to refresh the list.
+This is useful if you kick off several complex, long running queries.

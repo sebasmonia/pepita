@@ -23,6 +23,8 @@
 ;; h - to export to HTML
 ;; ? - to see the parameters used in the query
 ;; g - to refresh the results buffer
+;;
+;; Use the command pepita-queries-running to open a buffer with the items waiting for results
 
 ;;; Code:
 
@@ -157,7 +159,6 @@ Toggle column: <span id=\"cols\"> </span>
   (interactive)
   (setq pepita--auth-header nil)
   (pepita--message "Done. Next request will prompt for credentials."))
-
 
 ;;------------------Pending request management------------------------------------
 
@@ -385,17 +386,49 @@ Toggle column: <span id=\"cols\"> </span>
   "Create individual cells for ROW."
   (mapconcat (lambda (cell) (format "<TD>%s</TD>" (cdr cell))) row ""))
 
-(defvar pepita-results-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "?" 'pepita--search-parameters)
-    (define-key map "h" 'pepita--export-html)
-    (define-key map "j" 'pepita--export-json)
-    (define-key map "g" 'pepita--rerun-query)
-    map) "Keymap for pepita-results-mode.")
-
 (define-derived-mode pepita-results-mode
   fundamental-mode "Splunk results"
   "Major mode for Splunk results buffers.")
+
+(define-key pepita-results-mode-map (kbd "?") 'pepita--search-parameters)
+(define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
+(define-key pepita-results-mode-map (kbd "j") 'pepita--export-json)
+(define-key pepita-results-mode-map (kbd "g") 'pepita--rerun-query)
+
+;;---------------------Other interactive commands---------------------------------
+
+(define-derived-mode pepita--queries-running-mode tabulated-list-mode "Pepita - queries in progress view" "Major mode to display the queries still running."
+  (setq tabulated-list-format [("Buffer" 20 nil)
+                               ("From" 20 nil)
+                               ("To" 20)
+                               ("Query" 0 nil)])
+  (setq tabulated-list-padding 1)
+  (tabulated-list-init-header))
+
+(define-key pepita--queries-running-mode-map (kbd "g") 'pepita-queries-running)
+(define-key pepita--queries-running-mode-map (kbd "g") 'pepita-queries-running)
+
+(defun pepita-queries-running ()
+  "Open a window with the list of Splunk queries in progress."
+  (interactive)
+  (let ((data (pepita--convert-pending-tablist))
+        (buffer-name "*Pepita - queries running*"))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (pepita--queries-running-mode)
+      (setq tabulated-list-entries data)
+      (tabulated-list-print)
+      (switch-to-buffer buffer-name))))
+
+(defun pepita--convert-pending-tablist ()
+  "Return the data in `pepita--pending-requests` formatted for `pepita--queries-running-mode`."
+  (let ((in-progress (cl-remove-if 'null  pepita--pending-requests)))
+    (mapcar (lambda (item) (let-alist item
+                             (list .out-buffer
+                                   (vector .out-buffer
+                                           .from
+                                           .to
+                                           .query))))
+            in-progress)))
 
 (provide 'pepita)
 ;;; pepita.el ends here
