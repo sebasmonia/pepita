@@ -25,6 +25,8 @@
 ;; g - to refresh the results buffer
 ;;
 ;; Use the command pepita-queries-running to open a buffer with the items waiting for results
+;;
+;; For more details on usage see https://github.com/sebasmonia/pepita/blob/master/README.md
 
 ;;; Code:
 
@@ -254,14 +256,33 @@ Toggle column: <span id=\"cols\"> </span>
     (kill-buffer)) ;; this kills the original url.el output buffer
 
 (defun pepita--rerun-query (arg)
-  "Re-run the current query.  If ARG, run it in a new buffer."
+  "Re-run the current query.  If ARG, edit the query before running."
   (interactive "P")
-  (let ((out-buf-name (if arg nil (buffer-name))))
-    (destructuring-bind (query from to) pepita--search-parameters
-      (pepita-search query
-                     from
-                     to
-                     out-buf-name))))
+  (destructuring-bind (query from to) (if arg
+                                          (pepita--edit-buffer-query)
+                                        pepita--search-parameters)
+    (pepita-search query
+                   from
+                   to
+                   (buffer-name))))
+
+(defun pepita--rerun-query-new-buffer (arg)
+  "Re-run the current query in a new results buffer.  If ARG, edit the query before running."
+  (interactive "P")
+  (destructuring-bind (query from to) (if arg
+                                          (pepita--edit-buffer-query)
+                                        pepita--search-parameters)
+    (pepita-search query
+                   from
+                   to
+                   nil)))
+
+(defun pepita--edit-buffer-query ()
+  "Read the results buffer parameters and `read-string` on each of them, return as list."
+  (destructuring-bind (query from to) pepita--search-parameters
+    (list (read-string "Query term: " query)
+          (read-string "Events from: " from)
+          (read-string "Events to: " to))))
 
 (defun pepita--search-parameters ()
   "Show a message with the parameters used to run the search in this buffer."
@@ -269,10 +290,10 @@ Toggle column: <span id=\"cols\"> </span>
   (destructuring-bind (query from to) pepita--search-parameters
     (message "Query: \"%s\". \nEvents from %s to %s"
              query
-             (if (equal from "")
+             (if (string= from "")
                  "-"
                from)
-             (if (equal to "")
+             (if (string= to "")
                  "-"
                to))))
 
@@ -394,6 +415,7 @@ Toggle column: <span id=\"cols\"> </span>
 (define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
 (define-key pepita-results-mode-map (kbd "j") 'pepita--export-json)
 (define-key pepita-results-mode-map (kbd "g") 'pepita--rerun-query)
+(define-key pepita-results-mode-map (kbd "G") 'pepita--rerun-query-new-buffer)
 
 ;;---------------------Other interactive commands---------------------------------
 
@@ -405,7 +427,6 @@ Toggle column: <span id=\"cols\"> </span>
   (setq tabulated-list-padding 1)
   (tabulated-list-init-header))
 
-(define-key pepita--queries-running-mode-map (kbd "g") 'pepita-queries-running)
 (define-key pepita--queries-running-mode-map (kbd "g") 'pepita-queries-running)
 
 (defun pepita-queries-running ()

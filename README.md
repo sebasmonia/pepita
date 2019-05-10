@@ -13,11 +13,10 @@ See https://www.splunk.com for more information.
 <!--ts-->
 
    * [Installation and configuration](#installation-and-configuration)
-
-   * [Manual](#manual)
+   * [Usage](#usage)
      * [Interactive functions](#interactive-functions)
      * [Results buffer](#results-buffer)
-   * [Roadmap](#roadmap)
+     * [Queries in progress](#queries-in-progress)
 <!--te-->
 
 ## Installation and configuration
@@ -34,11 +33,11 @@ The next step would be tocall `customize-group` for pepita. Not a lot to see so 
 
 2. You can set `pepita-splunk-username` if you don't want to enter your user name on each session
 
-# Manual
+# Usage
 
 The first request to Splunk you will be prompted user/pass and then your credentials will be
 cached in memory as long as Emacs is open. I couldn't get session auth to work 
-yet (so we don't need to keep credentials around anymore) but it's a feature in the roadmap.
+yet (so that we don't need to keep credentials around anymore) but it's a feature in the roadmap.
 
 ## Interactive functions
 
@@ -53,6 +52,8 @@ I keep an org file with some common queries, in those scenarios the second funct
 It's also useful to refine a search from results (highlight the text you want to add to the query and
 call with prefix arg).
 
+In my config, I've bound these to `<f12>` and `S-<f12>` respectively.
+
 ## Search parameters
 
 _Query text_: this is exacly what you would type in the search box in Splunk
@@ -60,7 +61,6 @@ _Query text_: this is exacly what you would type in the search box in Splunk
 _From_: A time specification, or blank.
 
 _To_: A time specification, or blank.
-
 
 Splunk is really flexible with the format for the last two. For the full details see https://docs.splunk.com/Documentation/Splunk/7.2.4/SearchReference/SearchTimeModifiers, but the following examples can get you started: 
 
@@ -71,12 +71,13 @@ Splunk is really flexible with the format for the last two. For the full details
 
 ## Results buffer
 
-The search runs in the background, and the results are displayed in a new buffer, in CSV format.
-From that buffer you can use:
-* j - to export to JSON
-* h - to export to HTML
-* ? - to see the parameters used in the query
-* g - to re-run the query in the same results buffer. Use prefix arg to re-run the query in a new buffer.
+The search runs in the background, and the results are displayed in a new buffer, in CSV format. You can save the buffer and open it in Excel, for example, or load the data in SQLite.  
+When viewing the results the following commands are available:
+* ? - to see the parameters used in the query in the echo area.
+* j - to export to JSON. You can select which fields to export (separate by comma), or leave blank to export all of them.
+* h - to export to HTML. Field selection works the same. Generates a local web page and launches your default browser. It uses https://datatables.net and you can hide columns dinamically.
+* g - to re-run the query in the same results buffer. Use prefix arg to edit the query before running it. If you are constantly checking for a certain message in the last, say 5 minutes, this is great.
+* G - same as `g`, but will send the results to a new buffer. Useful to compare two runs of the same search, or the same query but adjusting the time span.
 
 ## Queries in progress
 
