@@ -297,15 +297,26 @@ Toggle column: <span id=\"cols\"> </span>
                  "-"
                to))))
 
+(defun pepita--replace-params (text)
+  "Replace parameters in TEXT, querying the user for each one."
+  (while (string-match "%%.*?%%" text)
+    (let ((param-value  (read-string (format "Value for parameter [%s]: "
+                                             (substring (match-string 0 text) 2 -2)))))
+      ;; read-string resets the string-match/replace-match dance so
+      ;; I have to re-search and then replace
+      (string-match "%%.*?%%" text)
+      (setq text (replace-match param-value t t text))))
+  text)
+
 ;;------------------Search - interactive commands---------------------------------
 
 (defun pepita-search-at-point (arg)
   "Search using the region or line at point as query.  With ARG use last search parameters as starting point."
   (interactive "P")
-  (pepita--read-and-search (if (use-region-p)
-                               (buffer-substring-no-properties (region-beginning) (region-end))
-                             (substring (thing-at-point 'line t) 0 -1))
-                           arg))
+  (let ((input-text (if (use-region-p)
+                        (buffer-substring-no-properties (region-beginning) (region-end))
+                      (substring (thing-at-point 'line t) 0 -1))))
+    (pepita--read-and-search (pepita--replace-params input-text) arg)))
 
 (defun pepita-new-search (arg)
   "Run a search.  With ARG use last search parameters as starting point."
@@ -409,7 +420,8 @@ Toggle column: <span id=\"cols\"> </span>
 
 (define-derived-mode pepita-results-mode
   fundamental-mode "Splunk results"
-  "Major mode for Splunk results buffers.")
+  "Major mode for Splunk results buffers."
+  (toggle-truncate-lines 1))
 
 (define-key pepita-results-mode-map (kbd "?") 'pepita--search-parameters)
 (define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
@@ -417,7 +429,7 @@ Toggle column: <span id=\"cols\"> </span>
 (define-key pepita-results-mode-map (kbd "g") 'pepita--rerun-query)
 (define-key pepita-results-mode-map (kbd "G") 'pepita--rerun-query-new-buffer)
 
-;;---------------------Other interactive commands---------------------------------
+;;------------------Other interactive commands------------------------------------
 
 (define-derived-mode pepita--queries-running-mode tabulated-list-mode "Pepita - queries in progress view" "Major mode to display the queries still running."
   (setq tabulated-list-format [("Buffer" 20 nil)
