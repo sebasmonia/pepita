@@ -67,7 +67,7 @@ This can be super handy if you are building a library of common queries. Let's s
 You set the point anywhere on it, and use your binding for `pepita-search-at-point`.  
 You will be prompted "Value for parameter [SomeText]: " and then "Value for parameter [The host]: ". Finally you will see the usual query prompt, with all values replaced.
 
-Note that the parameters name don't matter. For each match to the regex `%%.*?%%` you will be prompted for a replacement that will be inserted literally in the query.
+Note that the parameters name don't matter. For each match to the regex `%%.*?%%` you will be prompted for a replacement that will be inserted literally in the query.  
 Ex. `A query %%NoName%% %%NoName%% %%NoName%%` means you will be prompted for the parameter "NoName" three times in a row.
 
 ## Splunk search parameters
@@ -98,4 +98,4 @@ When viewing the results the following commands are available:
 ## Queries in progress
 
 The command `pepita-queries-running` will open a buffer with the list of queries waiting for results. Press `g` to refresh the list.
-This is useful if you kick off several complex, long running queries.
+This is useful to keep track of complex, long running queries, without searching your buffer list for all "Splunk results" buffers.
