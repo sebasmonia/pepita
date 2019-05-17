@@ -366,6 +366,20 @@ Toggle column: <span id=\"cols\"> </span>
   "Return FIELD from ALIST using equal to compare."
   (alist-get field alist nil nil 'equal))
 
+(defun pepita--export-org ()
+  "Export the current buffer to an Org table."
+  (interactive)
+  (save-excursion
+    (let ((org-buffer (concat (buffer-name) ".org")))
+      (get-buffer-create org-buffer)
+      (copy-to-buffer org-buffer (point-min) (point-max))
+      (with-current-buffer org-buffer
+        (org-mode)
+        (org-table-convert-region (point-min) (point-max) '(4))
+        (goto-char (point-min))
+        (org-table-insert-hline)
+        (switch-to-buffer org-buffer)))))
+
 (defun pepita--export-json ()
   "Export the current buffer to a JSON file."
   (interactive)
@@ -426,6 +440,7 @@ Toggle column: <span id=\"cols\"> </span>
 (define-key pepita-results-mode-map (kbd "?") 'pepita--search-parameters)
 (define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
 (define-key pepita-results-mode-map (kbd "j") 'pepita--export-json)
+(define-key pepita-results-mode-map (kbd "o") 'pepita--export-org)
 (define-key pepita-results-mode-map (kbd "g") 'pepita--rerun-query)
 (define-key pepita-results-mode-map (kbd "G") 'pepita--rerun-query-new-buffer)
 
