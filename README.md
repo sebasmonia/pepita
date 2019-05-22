@@ -88,11 +88,13 @@ Splunk is really flexible with the format for the last two. For the full details
 ## Results buffer
 
 The search runs in the background, and the results are displayed in a new buffer, in CSV format. You can save the buffer and open it in Excel, for example, or load the data in SQLite.  
-When viewing the results the following commands are available:
+You can use `C-h m` (describe-mode) to see the commands available. For convenience they are listed below:
+
 * ? - to see the parameters used in the query in the echo area.
 * j - to export to JSON. You can select which fields to export (separate by comma), or leave blank to export all of them.
 * h - to export to HTML. Field selection works the same. Generates a local web page and launches your default browser. It uses https://datatables.net and you can hide columns dinamically.
 * o - to export the results as an Org table. These are easily sorted and you can remove columns within Emacs, but don't support multi line cells. Use your best judgement :)
+* t - calls `toggle-truncate-lines`. Depending on your search results truncating can be more or less convenient.
 * g - to re-run the query in the same results buffer. Use prefix arg to edit the query before running it. If you are constantly checking for a certain message in the last, say 5 minutes, this is great.
 * G - same as `g`, but will send the results to a new buffer. Useful to compare two runs of the same search, or the same query but adjusting the time span.
 

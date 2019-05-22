@@ -15,18 +15,16 @@
 ;;; Commentary:
 
 ;; Runs a Splunk search from Emacs.  Returns the results as CSV, with option to export
-;; to JSON and HTML.
+;; to JSON,  HTML and Org tables.
 ;; The entry points are pepita-new-search and pepita-search-at-point
 ;; You will be prompted a query text, and time range for the query, and will get back
-;; the results (when ready) in a new buffer.  In the results you can use:
-;; j - to export to JSON
-;; h - to export to HTML
-;; ? - to see the parameters used in the query
-;; g - to refresh the results buffer
+;; the results (when ready) in a new buffer.
+;; Use describe-mode (C-h m) in the results buffer to see the available commands.
 ;;
 ;; Use the command pepita-queries-running to open a buffer with the items waiting for results
 ;;
 ;; For more details on usage see https://github.com/sebasmonia/pepita/blob/master/README.md
+;; including some workflow suggestions.
 
 ;;; Code:
 
@@ -253,7 +251,7 @@ Toggle column: <span id=\"cols\"> </span>
           (setq buffer-read-only t)
           (when pepita-message-on-search-complete
             (pepita--message (concat "Pepita: Results available in buffer " .out-buffer)))))))
-    (kill-buffer)) ;; this kills the original url.el output buffer
+  (kill-buffer)) ;; this kills the original url.el output buffer
 
 (defun pepita--rerun-query (arg)
   "Re-run the current query.  If ARG, edit the query before running."
@@ -441,6 +439,7 @@ Toggle column: <span id=\"cols\"> </span>
 (define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
 (define-key pepita-results-mode-map (kbd "j") 'pepita--export-json)
 (define-key pepita-results-mode-map (kbd "o") 'pepita--export-org)
+(define-key pepita-results-mode-map (kbd "t") 'toggle-truncate-lines)
 (define-key pepita-results-mode-map (kbd "g") 'pepita--rerun-query)
 (define-key pepita-results-mode-map (kbd "G") 'pepita--rerun-query-new-buffer)
 
