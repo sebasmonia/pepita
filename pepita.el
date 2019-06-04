@@ -158,7 +158,7 @@ Toggle column: <span id=\"cols\"> </span>
   "Clear current credentials, next request will prompt them again."
   (interactive)
   (setq pepita--auth-header nil)
-  (pepita--message "Done. Next request will prompt for credentials."))
+  (pepita--message "Pepita - Done. Next request will prompt for credentials."))
 
 ;;------------------Pending request management------------------------------------
 
@@ -193,7 +193,7 @@ Toggle column: <span id=\"cols\"> </span>
                         (max_time . "0")
                         (max_count . "10000")
                         (search . ,(concat "search " query-text))))
-        (out-buffer (or out-buffer-name (generate-new-buffer-name "Splunk result" )))
+        (out-buffer (or out-buffer-name (generate-new-buffer-name "Splunk: result" )))
         (pending-request-index nil))
     (unless (eq (length from) 0)
       (push (cons 'earliest_time from) querystring))
@@ -250,7 +250,7 @@ Toggle column: <span id=\"cols\"> </span>
           (goto-char (point-min))
           (setq buffer-read-only t)
           (when pepita-message-on-search-complete
-            (pepita--message (concat "Pepita: Results available in buffer " .out-buffer)))))))
+            (pepita--message (concat "Pepita - Results available in buffer \"" .out-buffer "\"")))))))
   (kill-buffer)) ;; this kills the original url.el output buffer
 
 (defun pepita--rerun-query (arg)
@@ -294,6 +294,11 @@ Toggle column: <span id=\"cols\"> </span>
              (if (string= to "")
                  "-"
                to))))
+
+(defun pepita--rename-results ()
+  "Rename the current results buffer.  Suggest \"Splunk: \" prefix."
+  (interactive)
+  (rename-buffer (read-string "Buffer name: " "Splunk: ")))
 
 (defun pepita--replace-params (text)
   "Replace parameters in TEXT, querying the user for each one."
@@ -432,14 +437,14 @@ Toggle column: <span id=\"cols\"> </span>
 
 (define-derived-mode pepita-results-mode
   fundamental-mode "Splunk results"
-  "Major mode for Splunk results buffers."
-  (toggle-truncate-lines 1))
+  "Major mode for Splunk results buffers.")
 
 (define-key pepita-results-mode-map (kbd "?") 'pepita--search-parameters)
 (define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
 (define-key pepita-results-mode-map (kbd "j") 'pepita--export-json)
 (define-key pepita-results-mode-map (kbd "o") 'pepita--export-org)
 (define-key pepita-results-mode-map (kbd "t") 'toggle-truncate-lines)
+(define-key pepita-results-mode-map (kbd "r") 'pepita--rename-results)
 (define-key pepita-results-mode-map (kbd "g") 'pepita--rerun-query)
 (define-key pepita-results-mode-map (kbd "G") 'pepita--rerun-query-new-buffer)
 
