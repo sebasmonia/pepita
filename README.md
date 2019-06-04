@@ -109,8 +109,8 @@ This is useful to keep track of complex, long running queries, without searching
 ## My workflow
 
 Most of the keybindings came from my own usage (you are welcome to suggest more, and also share your own workflow to refine the functionality).  
-I keep an org file with queries that I run with `pepita-search-at-point`, a few of them are parametrized with %%. If I'm looking for error messages or API calls I use `g` to keep refreshing the results in the last 10 minutes/hour etc.
-Sometimes once I get data, I want to filter certain fields. For example, I want to check out how many hosts ran a certain process, using `C-u G` I can add " | table _time host | dedup host" and get a separate results buffer.
+I keep an org file with queries that I run with `pepita-search-at-point`, a few of them are parametrized with %%. If I'm looking for error messages or API calls I use `g` to keep refreshing the results in the last 10 minutes/hour etc.  
+Sometimes once I get data, I want to filter certain fields. For example, I want to check out how many hosts ran a certain process, using `C-u G` I can add " | table _time host | dedup host" and get a separate results buffer.  
 Keep in mind using `g` or `G` with a prefix arg will allow adjusting the query and also the timespan, sometimes when hunting for something you don't modify the query but keep adding hours or days until you hit the jackpot.
 
 
