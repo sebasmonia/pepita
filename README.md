@@ -19,6 +19,8 @@ See https://www.splunk.com for more information.
      * [Splunk search parameters](#splunk-search-parameters)
      * [Results buffer](#results-buffer)
      * [Queries in progress](#queries-in-progress)
+     * [My workflow](#my-workflow)
+
 <!--te-->
 
 ## Installation and configuration
@@ -95,10 +97,23 @@ You can use `C-h m` (describe-mode) to see the commands available. For convenien
 * h - to export to HTML. Field selection works the same. Generates a local web page and launches your default browser. It uses https://datatables.net and you can hide columns dinamically.
 * o - to export the results as an Org table. These are easily sorted and you can remove columns within Emacs, but don't support multi line cells. Use your best judgement :)
 * t - calls `toggle-truncate-lines`. Depending on your search results truncating can be more or less convenient.
-* g - to re-run the query in the same results buffer. Use prefix arg to edit the query before running it. If you are constantly checking for a certain message in the last, say 5 minutes, this is great.
+* r - to rename the results buffer to something more meaningful. It suggests the "Splunk:" prefix.
+* g - to re-run the query in the same results buffer. Use prefix arg to edit the query before running it.
 * G - same as `g`, but will send the results to a new buffer. Useful to compare two runs of the same search, or the same query but adjusting the time span.
 
 ## Queries in progress
 
 The command `pepita-queries-running` will open a buffer with the list of queries waiting for results. Press `g` to refresh the list.
 This is useful to keep track of complex, long running queries, without searching your buffer list for all "Splunk results" buffers.
+
+## My workflow
+
+Most of the keybindings came from my own usage (you are welcome to suggest more, and also share your own workflow to refine the functionality).  
+I keep an org file with queries that I run with `pepita-search-at-point`, a few of them are parametrized with %%. If I'm looking for error messages or API calls I use `g` to keep refreshing the results in the last 10 minutes/hour etc.
+Sometimes once I get data, I want to filter certain fields. For example, I want to check out how many hosts ran a certain process, using `C-u G` I can add " | table _time host | dedup host" and get a separate results buffer.
+Keep in mind using `g` or `G` with a prefix arg will allow adjusting the query and also the timespan, sometimes when hunting for something you don't modify the query but keep adding hours or days until you hit the jackpot.
+
+
+Finally, until further optimization, exporting to JSON or HTML doesn't support more than 400~500 items (more if you pre-filter the fields). However, I've been able to successfully retrieve 2GB+ of results, saving the results buffer (since it is CSV) and open the files in Excel. I suppose you could also import the CSV in a database, if needed.
+
+
