@@ -18,7 +18,7 @@ See https://www.splunk.com for more information.
      * [Parametrized queries](#parametrized-queries)
      * [Splunk search parameters](#splunk-search-parameters)
      * [Results buffer](#results-buffer)
-     * [Queries in progress](#queries-in-progress)
+     * [Queries in progress and completed](#queries-in-progress-and-completed)
      * [My workflow](#my-workflow)
 
 <!--te-->
@@ -101,10 +101,14 @@ You can use `C-h m` (describe-mode) to see the commands available. For convenien
 * g - to re-run the query in the same results buffer. Use prefix arg to edit the query before running it.
 * G - same as `g`, but will send the results to a new buffer. Useful to compare two runs of the same search, or the same query but adjusting the time span.
 
-## Queries in progress
+## Queries in progress and completed
 
 The command `pepita-queries-running` will open a buffer with the list of queries waiting for results. Press `g` to refresh the list.
 This is useful to keep track of complex, long running queries, without searching your buffer list for all "Splunk results" buffers.
+
+Use `pepita-queries-history` will open a buffer with the list of queries that completed during the current session. RET will re-run
+the query under point and `g` will refresh the list. If you are looking at a list of results exported and want to tweak the search but
+don't have the original results buffer open to use `?`, then this mode might save the day.
 
 ## My workflow
 

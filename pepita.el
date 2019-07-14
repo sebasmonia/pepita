@@ -14,7 +14,7 @@
 
 ;;; Commentary:
 
-;; Runs a Splunk search from Emacs.  Returns the results as CSV, with option to export
+;; Run a Splunk search from Emacs.  Get the results as CSV, with option to export
 ;; to JSON,  HTML and Org tables.
 ;; The entry points are pepita-new-search and pepita-search-at-point
 ;; You will be prompted a query text, and time range for the query, and will get back
@@ -22,6 +22,7 @@
 ;; Use describe-mode (C-h m) in the results buffer to see the available commands.
 ;;
 ;; Use the command pepita-queries-running to open a buffer with the items waiting for results
+;; and pepita-queries-history to see a list of all queries completed in the session.
 ;;
 ;; For more details on usage see https://github.com/sebasmonia/pepita/blob/master/README.md
 ;; including some workflow suggestions.
@@ -93,6 +94,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 
 (defvar pepita--pending-requests (make-vector 20 nil) "Holds data for the pending requests.")
+(defvar pepita--request-history nil "Holds the list requests completed.")
 (defvar pepita--auth-header nil "Cached credentials for Splunk.")
 (defvar pepita--last-search-parameters nil)
 
@@ -182,6 +184,7 @@ Toggle column: <span id=\"cols\"> </span>
   "Clear INDEX from the list of pending requests, return the values."
   (let ((values (aref pepita--pending-requests index)))
     (aset pepita--pending-requests index nil)
+    (pepita--store-history values)
     values))
 
 ;;------------------Search functions and internal commands------------------------
@@ -218,7 +221,7 @@ Toggle column: <span id=\"cols\"> </span>
       (switch-to-buffer-other-window out-buffer))))
 
 (defun pepita--search-cb (_status pri)
-  "Call back to process the data of PRI  from a Splunk search, _STATUS is ignored."
+  "Callback to process the data of PRI from a Splunk search, _STATUS is ignored."
   ;; here we start in the http output buffer, briefly move to results to clear it, then copy the raw output
   ;; and finally go back to work on output
   (pepita--log (format "Results for %s: received %s lines of output" pri (count-lines (point-min) (point-max))))
@@ -457,7 +460,6 @@ Toggle column: <span id=\"cols\"> </span>
                                ("Query" 0 nil)])
   (setq tabulated-list-padding 1)
   (tabulated-list-init-header))
-
 (define-key pepita--queries-running-mode-map (kbd "g") 'pepita-queries-running)
 
 (defun pepita-queries-running ()
@@ -481,6 +483,46 @@ Toggle column: <span id=\"cols\"> </span>
                                            .to
                                            .query))))
             in-progress)))
+
+(define-derived-mode pepita--queries-history-mode tabulated-list-mode "Pepita - queries completed view" "Major mode to display the queries executed in this session."
+  (setq tabulated-list-format [("Date" 20 nil)
+                               ("From" 20 nil)
+                               ("To" 20)
+                               ("Query" 0 nil)])
+  (setq tabulated-list-padding 1)
+  (tabulated-list-init-header))
+(define-key pepita--queries-history-mode-map (kbd "g") 'pepita-queries-history)
+(define-key pepita--queries-history-mode-map (kbd "RET") 'pepita--queries-history-repeat)
+
+(defun pepita--store-history (query-data)
+  "Store QUERY-DATA from `pepita--request-history` formatted for `pepita--queries-history-mode`."
+  (message (prin1-to-string query-data))
+  (let-alist query-data
+    (let ((now (format-time-string "%Y-%m-%d %T")))
+      (push(list now
+                 (vector now
+                         .from
+                         .to
+                         .query))
+           pepita--request-history))))
+
+(defun pepita-queries-history ()
+  "Open a window with the list of Splunk queries completed in this session."
+  (interactive)
+  (let ((buffer-name "*Pepita - queries completed*"))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (pepita--queries-history-mode)
+      (setq tabulated-list-entries pepita--request-history)
+      (tabulated-list-print)
+      (switch-to-buffer buffer-name))))
+
+(defun pepita--queries-history-repeat ()
+  "Re-run the query under point in `pepita--queries-history-mode`."
+  (interactive)
+  (let ((params-vector (tabulated-list-get-entry)))
+    (pepita-search (elt params-vector 3)
+                   (elt params-vector 1)
+                   (elt params-vector 2))))
 
 (provide 'pepita)
 ;;; pepita.el ends here
