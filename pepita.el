@@ -496,7 +496,6 @@ Toggle column: <span id=\"cols\"> </span>
 
 (defun pepita--store-history (query-data)
   "Store QUERY-DATA from `pepita--request-history` formatted for `pepita--queries-history-mode`."
-  (message (prin1-to-string query-data))
   (let-alist query-data
     (let ((now (format-time-string "%Y-%m-%d %T")))
       (push(list now
