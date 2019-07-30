@@ -279,7 +279,7 @@ Toggle column: <span id=\"cols\"> </span>
                    nil)))
 
 (defun pepita--edit-buffer-query ()
-  "Read the results buffer parameters and `read-string` on each of them, return as list."
+  "Read the results buffer parameters and `read-string' on each of them, return as list."
   (destructuring-bind (query from to) pepita--search-parameters
     (list (read-string "Query term: " query)
           (read-string "Events from: " from)
@@ -474,7 +474,7 @@ Toggle column: <span id=\"cols\"> </span>
       (switch-to-buffer buffer-name))))
 
 (defun pepita--convert-pending-tablist ()
-  "Return the data in `pepita--pending-requests` formatted for `pepita--queries-running-mode`."
+  "Return the data in `pepita--pending-requests' formatted for `pepita--queries-running-mode'."
   (let ((in-progress (cl-remove-if 'null  pepita--pending-requests)))
     (mapcar (lambda (item) (let-alist item
                              (list .out-buffer
@@ -495,7 +495,7 @@ Toggle column: <span id=\"cols\"> </span>
 (define-key pepita--queries-history-mode-map (kbd "RET") 'pepita--queries-history-repeat)
 
 (defun pepita--store-history (query-data)
-  "Store QUERY-DATA from `pepita--request-history` formatted for `pepita--queries-history-mode`."
+  "Store QUERY-DATA from `pepita--request-history' formatted for `pepita--queries-history-mode'."
   (let-alist query-data
     (let ((now (format-time-string "%Y-%m-%d %T")))
       (push(list now
@@ -516,7 +516,7 @@ Toggle column: <span id=\"cols\"> </span>
       (switch-to-buffer buffer-name))))
 
 (defun pepita--queries-history-repeat ()
-  "Re-run the query under point in `pepita--queries-history-mode`."
+  "Re-run the query under point in `pepita--queries-history-mode'."
   (interactive)
   (let ((params-vector (tabulated-list-get-entry)))
     (pepita-search (elt params-vector 3)
