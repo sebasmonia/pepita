@@ -34,7 +34,7 @@
 (require 'csv)
 
 (defgroup pepita nil
-  "Run a searche in Splunk from Emacs."
+  "Run a search in Splunk from Emacs."
   :group 'extensions)
 
 (defcustom pepita-splunk-url ""
