@@ -61,7 +61,7 @@ See the next section for even more usefulness from `search-at-point`.
 
 ## Parametrized queries
 
-You can store parameters in a query text, and you will be prompted for replaments when using `pepita-search-at-point`.  
+You can store parameters in a query text, and you will be prompted for replacements when using `pepita-search-at-point`.  
 This can be super handy if you are building a library of common queries. Let's say you have the following line in a text or org file:
 
 `index=some_application_name TheWorstExceptionEver "%%SomeText%%"  Hostname=%%The host%%`
@@ -74,7 +74,7 @@ Ex. `A query %%NoName%% %%NoName%% %%NoName%%` means you will be prompted for th
 
 ## Splunk search parameters
 
-_Query text_: this is exacly what you would type in the search box in Splunk
+_Query text_: this is exactly what you would type in the search box in Splunk
 
 _From_: A time specification, or blank.
 
@@ -106,7 +106,7 @@ You can use `C-h m` (describe-mode) to see the commands available. For convenien
 The command `pepita-queries-running` will open a buffer with the list of queries waiting for results. Press `g` to refresh the list.
 This is useful to keep track of complex, long running queries, without searching your buffer list for all "Splunk results" buffers.
 
-Use `pepita-queries-history` will open a buffer with the list of queries that completed during the current session. RET will re-run
+Use `pepita-queries-history` to open a buffer with the list of queries that completed during the current session. RET will re-run
 the query under point and `g` will refresh the list. If you are looking at a list of results exported and want to tweak the search but
 don't have the original results buffer open to use `?`, then this mode might save the day.
 
