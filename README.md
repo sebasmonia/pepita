@@ -100,6 +100,7 @@ You can use `C-h m` (describe-mode) to see the commands available. For convenien
 * r - to rename the results buffer to something more meaningful. It suggests the "Splunk:" prefix.
 * g - to re-run the query in the same results buffer. Use prefix arg to edit the query before running it.
 * G - same as `g`, but will send the results to a new buffer. Useful to compare two runs of the same search, or the same query but adjusting the time span.
+* q - to quit, as in most Emacs read-only buffers.
 
 ## Queries in progress and completed
 

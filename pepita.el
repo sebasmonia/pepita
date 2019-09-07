@@ -303,6 +303,12 @@ Toggle column: <span id=\"cols\"> </span>
   (interactive)
   (rename-buffer (read-string "Buffer name: " "Splunk: ")))
 
+(defun pepita--close-results ()
+  "Close the current results buffer."
+  (interactive)
+  ;; Could add more clean up tasks here :)
+  (kill-buffer))
+
 (defun pepita--replace-params (text)
   "Replace parameters in TEXT, querying the user for each one."
   (while (string-match "%%.*?%%" text)
@@ -443,6 +449,7 @@ Toggle column: <span id=\"cols\"> </span>
   "Major mode for Splunk results buffers.")
 
 (define-key pepita-results-mode-map (kbd "?") 'pepita--search-parameters)
+(define-key pepita-results-mode-map (kbd "q") 'pepita--close-results)
 (define-key pepita-results-mode-map (kbd "h") 'pepita--export-html)
 (define-key pepita-results-mode-map (kbd "j") 'pepita--export-json)
 (define-key pepita-results-mode-map (kbd "o") 'pepita--export-org)
