@@ -259,7 +259,7 @@ Toggle column: <span id=\"cols\"> </span>
 (defun pepita--rerun-query (arg)
   "Re-run the current query.  If ARG, edit the query before running."
   (interactive "P")
-  (destructuring-bind (query from to) (if arg
+  (cl-destructuring-bind (query from to) (if arg
                                           (pepita--edit-buffer-query)
                                         pepita--search-parameters)
     (pepita-search query
@@ -270,7 +270,7 @@ Toggle column: <span id=\"cols\"> </span>
 (defun pepita--rerun-query-new-buffer (arg)
   "Re-run the current query in a new results buffer.  If ARG, edit the query before running."
   (interactive "P")
-  (destructuring-bind (query from to) (if arg
+  (cl-destructuring-bind (query from to) (if arg
                                           (pepita--edit-buffer-query)
                                         pepita--search-parameters)
     (pepita-search query
@@ -280,7 +280,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 (defun pepita--edit-buffer-query ()
   "Read the results buffer parameters and `read-string' on each of them, return as list."
-  (destructuring-bind (query from to) pepita--search-parameters
+  (cl-destructuring-bind (query from to) pepita--search-parameters
     (list (read-string "Query term: " query)
           (read-string "Events from: " from)
           (read-string "Events to: " to))))
@@ -288,7 +288,7 @@ Toggle column: <span id=\"cols\"> </span>
 (defun pepita--search-parameters ()
   "Show a message with the parameters used to run the search in this buffer."
   (interactive)
-  (destructuring-bind (query from to) pepita--search-parameters
+  (cl-destructuring-bind (query from to) pepita--search-parameters
     (message "Query: \"%s\". \nEvents from %s to %s"
              query
              (if (string= from "")
