@@ -8,6 +8,8 @@ Run a Splunk search from Emacs.
 Splunk is a tool that ingests plain data (for example, logs) and makes it searchable. It exposes a REST API, which made this package possible.
 See https://www.splunk.com for more information.
 
+**You can buy me a [cup of ko-fi](https://ko-fi.com/A0A527CN7)! There's also a [PayPal option](https://www.paypal.me/sebasmonia).**
+
 ## Table of contents
 
 <!--ts-->
