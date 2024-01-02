@@ -189,6 +189,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 ;;------------------Search functions and internal commands------------------------
 
+;;;###autoload
 (defun pepita-search (query-text &optional from to out-buffer-name)
   "Run a Splunk search with QUERY-TEXT, between FROM and TO, if provided use OUT-BUFFER-NAME."
   (let ((method "search/jobs/export")
@@ -322,6 +323,7 @@ Toggle column: <span id=\"cols\"> </span>
 
 ;;------------------Search - interactive commands---------------------------------
 
+;;;###autoload
 (defun pepita-search-at-point (arg)
   "Search using the region or line at point as query.  With ARG use last search parameters as starting point."
   (interactive "P")
@@ -330,6 +332,7 @@ Toggle column: <span id=\"cols\"> </span>
                       (substring (thing-at-point 'line t) 0 -1))))
     (pepita--read-and-search (pepita--replace-params input-text) arg)))
 
+;;;###autoload
 (defun pepita-new-search (arg)
   "Run a search.  With ARG use last search parameters as starting point."
   (interactive "P")
