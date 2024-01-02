@@ -53,7 +53,7 @@ In my config, I've bound these to `<f12>` and `S-<f12>` respectively:
 provides the parameters from the last search as starting point.
 
 * `pepita-search-at-point`: Just like the previous function, but use the region, or current
-line if region is not active, as query text. If called with prefix args, prepend the last 
+line if region is not active, as query text. If called with prefix arg, prepend the last 
 search text to the new input.
 
 I keep an org file with some common queries, in those scenarios the second function is really handy.
